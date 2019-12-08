@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+    <meta charset="utf-8" />
+    <title>
+        Perfect Calendar
+    </title>
+    <style>
+        body{
+        /*image from http://www.58pic.com/sucai/17819538.html */
+        background-image:url(bg.jpg);
+    }
+    .calendar{
+        text-align: center;
+    }
+    table{
+        margin: auto;
+    }
+    th{
+        border-left:5px solid brown;
+        border-right:5px solid brown;
+        border-bottom:5px solid brown;
+        border-top:5px solid brown;
+        width:200px;
+        height:75px;
+        font-size: 200%
+    }
+    td{
+        width:200px;
+        height:75px;
+        font-size: 260%;
+        border-left:5px solid rgb(219, 139, 48);
+        border-right:5px solid rgb(219, 139, 48);
+        border-bottom:5px solid rgb(219, 139, 48);
+        border-top:5px solid rgb(219, 139, 48);
+        text-align:left;
+    }
+    .loginInfo{
+        color:#FF0000;
+    }
+    .signupInfo{
+        color:#FF0000;
+    }
+    .currentInfo{
+        text-align: center;
+        color:#FF0000;
+        font-size: 175%;
+    }
+    .displayInfo {
+        text-align: center;
+        font-size: 150%;
+        display: none     
+    }
+    .dispTitle {
+        font-size: 60%; 
+        color:red;    
+    }
+    #dialog{
+        display: none
+    }
+    #logout{
+        display: none
+    }
+</style>
+</head>
+
+<body>
+    <button id="logout">Log out</button>
+    <div id="dialog">No Event!</div>
+    <p id='displayInfo' class='displayInfo'></p>
+    <!--The Login GUI-->
+    <div id="login">
+        <b>Login:</b>
+        <input id='username' type="text" name="username" placeholder="Username" />
+        <input id='password' type="text" name="password" placeholder="Password" />
+        <button id="login_b">Log in</button>
+        <b><label id='loginInfo' class='loginInfo'></label></b>
+    </div>
+    <!--The Register GUI-->
+    <div id="register">
+        <b>Register New User:</b>
+        <input id='r_username' type="text" name="r_username" placeholder="Register Username" />
+        <input id='r_password' type="text" name="r_password" placeholder="Register Password" />
+        <button id="register_b">Register</button>
+        <b><label id='signupInfo' class='signupInfo'></label></b>
+    </div>
+    <!--Current Month Info-->
+    <p class='currentInfo'><b id='currentInfo'>Current Month</b></p>
+    <!--The main calendar part-->
+    <div id="calendar" class="calendar">
+        Move to:<input id='quickmove' type="text" name="quickmove" placeholder="mm/yyyy" />
+        <button id="previous_month_btn">Previous Month</button>
+        <button id="next_month_btn">Next Month</button>
+        <select id="showtag">
+            <option value='showall'>show all</option>
+        </select>
+        <table id="calendar_t">
+            <tr>
+                <th>Sunday</th>
+                <th>Monday</th>
+                <th>Tuesday</th>
+                <th>Wednesday</th>
+                <th>Thursday</th>
+                <th>Friday</th>
+                <th>Saturday</th>
+            </tr>
+        </table>
+    </div>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/start/jquery-ui.css" type="text/css" rel="Stylesheet" />
+    <!-- We need the style sheet linked above or the dialogs/other parts of jquery-ui won't display correctly!-->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+    <!-- The main library. Note: must be listed before the jquery-ui library -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js"></script>
+    <!-- jquery-UI hosted on Google's Ajax CDN-->
+    <script>
+        //We need to keep the token
+        let token = null;
+        //When a user has logged in
+        //To store the events
+        let events = null;
+        function eventsCallback(data) {
+            events = data;
+            updateCalendar();
+        }
+
+        function loginSucceed(username) {
+            $("#login").css("display", "none");
+            $("#register").css("display", "none");
+            document.getElementById("displayInfo").textContent = "Hello, " + username + "!";
+            $("#displayInfo").css("display", "inline");
+            $("#logout").css("display", "inline");
+            fetch("events.php", {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(eventsCallback)
+                .catch(error => console.error('Error:', error));
+        }
+        //login part
+        function loginCallback(data) {
+            if (data.success) {
+                token = data.token;
+                loginSucceed(document.getElementById("username").value)
+            } else {
+                document.getElementById("loginInfo").textContent = data.message;
+            }
+        }
+        function loginAjax() {
+            const username = document.getElementById("username").value; // Get the username
+            const password = document.getElementById("password").value; // Get the password
+
+            // Make a URL-encoded string for passing POST data:
+            const data = { 'username': username, 'password': password };
+
+            fetch("login.php", {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: { 'content-type': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(loginCallback)
+                .catch(error => console.error('Error:', error));
+        }
+
+        document.getElementById("login_b").addEventListener("click", loginAjax, false); // Bind the AJAX call to button
+
+        //sign up part
+        function signupCallback(data) {
+            if (data.success) {
+                token = data.token;
+                loginSucceed(document.getElementById("r_username").value);
+            } else {
+                document.getElementById("signupInfo").textContent = data.message;
+            }
+        }
+        function signupAjax() {
+            const username = document.getElementById("r_username").value; // Get the username
+            const password = document.getElementById("r_password").value; // Get the password
+
+            // Make a URL-encoded string for passing POST data:
+            const data = { 'r_username': username, 'r_password': password };
+
+            fetch("signup.php", {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: { 'content-type': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(signupCallback)
+                .catch(error => console.error('Error:', error));
+        }
+
+        document.getElementById("register_b").addEventListener("click", signupAjax, false); // Bind the AJAX call to button
+
+        //The calendar API provided in the course wiki
+        (function () {
+            Date.prototype.deltaDays = function (c) {
+                return new Date(this.getFullYear(), this.getMonth(), this.getDate() + c);
+            };
+            Date.prototype.getSunday = function () {
+                return this.deltaDays(-1 * this.getDay());
+            };
+        })();
+        function Week(c) {
+            this.sunday = c.getSunday();
+            this.nextWeek = function () {
+                return new Week(this.sunday.deltaDays(7));
+            };
+            this.prevWeek = function () {
+                return new Week(this.sunday.deltaDays(-7));
+            };
+            this.contains = function (b) {
+                return this.sunday.valueOf() === b.getSunday().valueOf();
+            };
+            this.getDates = function () {
+                for (var b = [], a = 0; 7 > a; a++)
+                    b.push(this.sunday.deltaDays(a));
+                return b;
+            };
+        }
+        function Month(c, b) {
+            this.year = c;
+            this.month = b;
+            this.nextMonth = function () {
+                return new Month(c + Math.floor((b + 1) / 12), (b + 1) % 12);
+            };
+            this.prevMonth = function () {
+                return new Month(c + Math.floor((b - 1) / 12), (b + 11) % 12);
+            };
+            this.getDateObject = function (a) {
+                return new Date(this.year, this.month, a);
+            };
+            this.getWeeks = function () {
+                var a = this.getDateObject(1), b = this.nextMonth().getDateObject(0), c = [], a = new Week(a);
+                for (c.push(a); !a.contains(b);)
+                    a = a.nextWeek(), c.push(a);
+                return c
+            }
+        };
+        // For our purposes, we can keep the current month in a variable in the global scope
+        var myDate = new Date();
+        var currentMonth = new Month(myDate.getFullYear(), myDate.getMonth()); // Current Month
+
+        //When the tag is changed
+        document.getElementById('showtag').addEventListener("change", updateC, false);
+
+        //Show the tag selector
+        function showTags() {
+            $("#showtag").empty();
+            $("#showtag").append("<option value='showall'>show all</option>");
+            //check whether the tag is in the select box
+            for (var e in events) {
+                tag = events[e].tag;
+                if (!document.getElementById("T" + tag)) {
+                    $("#showtag").append("<option id='T" + tag + "'>" + tag + "</option>");
+                }
+            }
+        }
+        //When the quick move textfield is changed
+        document.getElementById('quickmove').addEventListener("keyup", quickMove, false);
+
+        //Change the current month
+        function quickMove() {
+            if (/^\d{2}\/\d{4}$/.test($("#quickmove").val()) && Number($("#quickmove").val().substr(0, 2)) < 13 && Number($("#quickmove").val().substr(0, 2)) > 0 && Number($("#quickmove").val().substr(3, 4)) >= 1500 && Number($("#quickmove").val().substr(3, 4)) <= 2500) {
+                let count = Number($("#quickmove").val().substr(3, 4)) - currentMonth.year;
+                count *= 12;
+                count += (Number($("#quickmove").val().substr(0, 2)) - currentMonth.month) - 1;
+                if (count < 0) {
+                    for (; count < 0; count++)
+                        currentMonth = currentMonth.prevMonth();
+                } else {
+                    for (; count > 0; count--)
+                        currentMonth = currentMonth.nextMonth();
+                }
+            }
+            updateC();
+        }
+        //update the clendar page
+        function updateCalendar() {
+            showTags();
+            updateC();
+        }
+        // update the calendar table
+        function updateC() {
+            document.getElementById("currentInfo").textContent = "Current Month: " + (Number(currentMonth.month) + 1) + "/" + currentMonth.year;
+
+            const weeks = currentMonth.getWeeks();
+            const table = document.getElementById("calendar_t");
+            //remove the original rows
+            if (document.getElementById("tr0")) {
+                table.removeChild(document.getElementById("tr0"));
+            }
+            if (document.getElementById("tr1")) {
+                table.removeChild(document.getElementById("tr1"));
+            }
+            if (document.getElementById("tr2")) {
+                table.removeChild(document.getElementById("tr2"));
+            }
+            if (document.getElementById("tr3")) {
+                table.removeChild(document.getElementById("tr3"));
+            }
+            if (document.getElementById("tr4")) {
+                table.removeChild(document.getElementById("tr4"));
+            }
+            if (document.getElementById("tr5")) {
+                table.removeChild(document.getElementById("tr5"));
+            }
+            for (var w in weeks) {
+                var days = weeks[w].getDates();
+                const newTr = document.createElement("tr");
+                newTr.setAttribute("id", "tr" + w);
+                for (var d in days) {
+                    const newTd = document.createElement("td");
+                    
+                    if (days[d].getMonth() == currentMonth.month) {
+                        newTd.setAttribute("id", "grid" + days[d].getDate());
+                        dayText = document.createElement("a");
+                        dayText.setAttribute("id", "box" + days[d].getDate());
+                        dayText.setAttribute("href", "");
+                        dayText.textContent = (days[d].getDate());
+                        newTd.appendChild(dayText);
+
+                        for (var event in events) {
+                            date = events[event].date;
+                            year = date.slice(0, 4);
+                            month = date.slice(5, 7);
+                            day = date.slice(8, 10);
+                            time = date.slice(11, 16);
+                            tag = events[event].tag;
+                            //add to the calendar
+                            if (days[d].getDate() == day && days[d].getMonth() == month - 1 && days[d].getFullYear() == year && ($("#showtag option:selected").text() == "show all" || $("#showtag option:selected").text() == tag)) {
+                                dispTitle = document.createElement("label");
+                                dispTitle.appendChild(document.createTextNode(time + "-" + events[event].title))
+                                dispTitle.setAttribute("class", "dispTitle");
+                                newTd.appendChild(document.createElement("br"));
+                                newTd.appendChild(dispTitle);
+                            }
+                        }
+                    } else
+                        newTd.appendChild(document.createTextNode(''));
+                    newTr.appendChild(newTd);
+                }
+                table.appendChild(newTr);
+
+            }
+            for (var i = 1; document.getElementById("box" + i); i++) {
+                const index = i;
+                $("#" + "box" + i).click(function (event) {
+                    event.preventDefault();
+                    showdialog(index);
+                });
+            }
+            if (currentMonth.month == myDate.getMonth() && currentMonth.year == myDate.getFullYear())
+                $("#grid" + myDate.getDate()).css("background-color", "orange");
+        }
+        //When the date is clicked, display dialog
+        function showdialog(mydate) {
+            $("#dialog").empty();
+            let count = 0;
+            for (var event in events) {
+                date = events[event].date;
+                year = date.slice(0, 4);
+                month = date.slice(5, 7);
+                day = date.slice(8, 10);
+                const time = date.slice(11, 16);
+                const tag = events[event].tag;
+                const title = events[event].title;
+                const id = events[event].id;
+                if (mydate == day && (currentMonth.month == (month - 1)) && currentMonth.year == year) {
+                    $("#dialog").append("<p>" + time + "-" + "<b>" + tag + "</b>" + "-" + title +
+                        "<button id='delete" + count + "'>delete</button><button id='edit" + count + "'>edit</button><button id='share" + count + "'>share</button></p>");
+                    $("#delete" + count).click(function () {
+                        const data = {
+                            'id': id,
+                            'token': token
+                        };
+
+                        fetch("delete.php", {
+                            method: 'POST',
+                            body: JSON.stringify(data),
+                            headers: { 'content-type': 'application/json' }
+                        })
+                            .then(response => response.json())
+                            .then(finishCallback)
+                            .catch(error => console.error('Error:', error));
+                    });
+
+                    $("#edit" + count).click(function () {
+                        $("#dialog").empty();
+                        $("#dialog").append("<input id='e_title' type='text' name='e_title' value='" + title + "'/>" +
+                            "<input id='e_tag' type='text' name='e_tag' value='" + tag + "'/>" +
+                            "<input id='e_time' type='text' name='e_time' value='" + time + "'/>" +
+                            "<p>For exampe:</br>TITLE: Take CSE330</br>TAG: Class</br>TIME: 10:00</p>");
+                        $("#dialog").dialog({
+                            buttons: {
+                                "Close": function () { $(this).dialog('close'); },
+                                "Edit": function () {
+                                    const etit = $("#e_title").val();
+                                    const etag = $("#e_tag").val();
+                                    const etim = $("#e_time").val();
+                                    const data = { 'token': token, 'id': id, 'title': etit, 'tag': etag, 'date': currentMonth.year + "-" + (Number(currentMonth.month) + 1) + "-" + mydate + " " + etim + ":00" };
+                                    fetch("edit.php", {
+                                        method: 'POST',
+                                        body: JSON.stringify(data),
+                                        headers: { 'content-type': 'application/json' }
+                                    })
+                                        .then(response => response.json())
+                                        .then(finishCallback)
+                                        .catch(error => console.error('Error:', error));
+                                }
+                            },
+                            title: "Editing",
+                            show: "slide",
+                            hide: "slide"
+                        });
+                    });
+                    $("#share" + count).click(function () {
+                        $("#dialog").empty();
+                        $("#dialog").append("<input id='s_username' type='text' name='s_username' placeholder='username'/>");
+                        $("#dialog").dialog({
+                            buttons: {
+                                "Close": function () { $(this).dialog('close'); },
+                                "Share": function () {
+                                    const s_username = $("#s_username").val();
+                                    const data = { 'token': token, 's_username': s_username, 'id': id };
+                                    fetch("share.php", {
+                                        method: 'POST',
+                                        body: JSON.stringify(data),
+                                        headers: { 'content-type': 'application/json' }
+                                    })
+                                        .then(response => response.json())
+                                        .then(finishCallback)
+                                        .catch(error => console.error('Error:', error));
+                                }
+                            },
+                            title: "Share to ...",
+                            show: "slide",
+                            hide: "slide"
+                        });
+                    });
+                    count++;
+                }
+            }
+            if (count == 0)
+                $("#dialog").append("<p>No Event!</p>");
+            if (token) {
+                $("#dialog").dialog({
+                    buttons: {
+                        "Close": function () { $(this).dialog('close'); },
+                        "Add an Event": function () { addEvent(mydate); }
+                    },
+                    title: "Day: " + mydate,
+                    show: "slide",
+                    hide: "slide"
+                });
+            } else {
+                $("#dialog").dialog({
+                    buttons: {
+                        "Close": function () { $(this).dialog('close'); }
+                    },
+                    title: "Day: " + mydate,
+                    show: "slide",
+                    hide: "slide"
+                });
+            }
+        }
+        //When "Add an Event" is clicked
+        function addEvent(mydate) {
+            $("#dialog").empty();
+            $("#dialog").append("<input id='p_title' type='text' name='p_title' placeholder='Event Title'/>" +
+                "<input id='p_tag' type='text' name='p_tag' placeholder='Tag'/>" +
+                "<input id='p_time' type='text' name='p_time' placeholder='HH:mm'/>" +
+                "<p>For exampe:</br>TITLE: Take CSE330</br>TAG: Class</br>TIME: 10:00</p>");
+            $("#dialog").dialog({
+                buttons: {
+                    "Close": function () { $(this).dialog('close'); },
+                    "Post": function () { postEvent(mydate); }
+                },
+                title: "Add an event on day " + mydate,
+                show: "slide",
+                hide: "slide"
+            });
+        }
+        //When "Post" is clicked
+        function postEvent(mydate) {
+            const ptit = $("#p_title").val();
+            const ptag = $("#p_tag").val();
+            const ptim = $("#p_time").val();
+            //Send information to add.php
+            const data = { 'token': token, 'title': ptit, 'tag': ptag, 'date': currentMonth.year + "-" + (Number(currentMonth.month) + 1) + "-" + mydate + " " + ptim + ":00" };
+
+            fetch("add.php", {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: { 'content-type': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(finishCallback)
+                .catch(error => console.error('Error:', error));
+        }
+
+        function finishCallback(data) {
+            $("#dialog").empty();
+            $("#dialog").append("<p>" + data.message + "</p>");
+            //Get the new information from database, refresh the calendar
+            fetch("events.php", {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(eventsCallback)
+                .catch(error => console.error('Error:', error));
+            $("#dialog").dialog({
+                buttons: {
+                    "Close": function () {
+                        $(this).dialog('close');
+                    }
+                },
+                title: "Reminder",
+                show: "slide",
+                hide: "slide"
+            });
+        }
+
+        //When a page is refreshed, check whether the user has been logged in
+        document.addEventListener("DOMContentLoaded", checkLogin, false);
+
+        //We need to show the current month when the page is loaded
+        document.addEventListener("DOMContentLoaded", updateCalendar, false);
+
+        function checkLogin() {
+            fetch("checkLogin.php", {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(checkLoginCallback)
+                .catch(error => console.error('Error:', error));
+        }
+        function checkLoginCallback(data) {
+            if (data.success) {
+                token = data.token;
+                loginSucceed(data.username);
+            }
+        }
+        // Change the month when the "next" button is pressed
+        document.getElementById("next_month_btn").addEventListener("click", function (event) {
+            currentMonth = currentMonth.nextMonth(); // Previous month would be currentMonth.prevMonth()
+            updateCalendar(); // Whenever the month is updated, we'll need to re-render the calendar in HTML
+        }, false);
+        // Change the month when the "previous" button is pressed
+        document.getElementById("previous_month_btn").addEventListener("click", function (event) {
+            currentMonth = currentMonth.prevMonth();
+            updateCalendar();
+        }, false);
+        //  Log out when clicked
+        document.getElementById("logout").addEventListener("click", function (event) {
+            fetch("logout.php", {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(logoutCallback)
+                .catch(error => console.error('Error:', error));
+        }, false);
+
+        //When a user logs out
+        function logoutCallback(data) {
+            token = null;
+            events = null;
+            $("#login").css("display", "block");
+            $("#register").css("display", "block");
+            $("#logout").css("display", "none");
+            $("#displayInfo").css("display", "none");
+            updateCalendar();
+        }
+    </script>
+</body>
+
+</html>

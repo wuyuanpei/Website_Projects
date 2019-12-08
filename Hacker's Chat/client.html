@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+    <meta charset="utf-8" />
+    <title>
+        Hackers' Chat
+    </title>
+    <style>
+        body{
+            background-color: black;
+            color: white;
+            text-align: center;
+        }
+        #caption{
+            color:red;
+            font-size: 300%;
+        }
+        #introduction{
+            font-size: 175%;
+        }
+        #login_input{
+            font-size: 225%;
+        }
+        #login_button{
+            font-size: 225%;
+        }
+        #login_error{
+            color:red;
+            font-size: 235%;
+        }
+        #message_input{
+            width:300px;
+            font-size: 150%;
+            display:none;
+        }
+        #message_button{
+            font-size: 150%;
+            display:none;
+        }
+        #to_whom{
+            font-size: 150%;
+            display:none;
+        }
+        #quit_button{
+            font-size: 150%;
+            display:none;
+        }
+        #create_room{
+            display:none;
+        }
+        #room_type{
+            font-size: 150%;
+        }
+        #room_name_input{
+            font-size: 150%;
+        }
+        #room_password_input{
+            font-size: 150%;
+        }
+        #create_room_button{
+            font-size: 150%;
+        }
+        #create_error{
+            color:red;
+            font-size: 235%;
+        }
+        #room_list{
+            border:3px solid snow;
+            display:none;
+        }
+        th, td{
+            height:37px;
+            width:200px;
+            text-align:center;
+            font-size: 150%;
+            border:1px solid snow;
+        }
+        #room_list_info{
+            display:none;
+            font-size: 250%;
+        }
+        .enter_button{
+            font-size: 100%;
+            height:35px;
+            width:190px;
+        }
+        .enter_password_input{
+            font-size: 75%;
+        }
+        #chatlog{
+            font-size: 175%;
+            border:3px solid snow;
+            display:none;
+        }
+        #chat_info{
+            text-align:center;
+            font-size: 175%;
+            color:rgb(221, 103, 103);
+        }
+        #chat1{
+            height:37px;
+            width:200px;
+            text-align:left;
+            font-size: 110%;
+            border:0px;
+        }
+        #chat2{
+            height:37px;
+            width:800px;
+            text-align:left;
+            font-size: 110%;
+            border:0px;
+        }
+        #admin_panel{
+            display:none;
+        }
+        #user_list{
+            font-size: 150%;
+        }
+        #kick{
+            font-size: 150%;
+        }
+        #ban{
+            font-size: 150%;
+        }
+        #delete{
+            font-size: 150%;
+            color:red;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h1 id="caption">Hackers' Chat</h1>
+    <p id="introduction">
+        <i>Hackers' Chat</i> is a multi-room chat server built on Node.JS and Socket.IO.<br />
+        You can create public/private chat rooms and communicate with any users.<br />
+        Please give yourself a nickname and log into the main lobby.
+    </p>
+    <input type="text" id="login_input" placeholder="nickname" />
+    <button id="login_button">Login</button>
+    <div id="login_error"></div>
+
+    <div id="send_message">
+        <input type="text" id="message_input" placeholder="message" />
+        <select id="to_whom">
+        </select>
+        <button id="message_button">send</button>
+        <button id="quit_button">quit room</button>
+    </div>
+    <div id="admin_panel">
+        <br />
+        <select id="user_list">
+        </select>
+        <button id="kick">kick</button>
+        <button id="ban">ban</button>
+        <button id="delete">delete room</button>
+    </div>
+    <div id="create_room">
+        <select id="room_type">
+            <option value='private'>private</option>
+            <option value='public'>public</option>
+        </select>
+        <input type="text" id="room_name_input" placeholder="room name" />
+        <input type="text" id="room_password_input" placeholder="room password" />
+        <button id="create_room_button">create chat room</button>
+    </div>
+    <div id="create_error"></div>
+
+    <p id="room_list_info"></p>
+    <table id="room_list">
+    </table>
+    <div id="chat_info"></div>
+    <table id="chatlog">
+    </table>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        //The login_input grab focus
+        $("#login_input").focus();
+        var socketio = io.connect();
+        socketio.on("message_to_client", function (data) {
+            $("#chatlog").prepend("<tr><td id='chat1'><b>" + data['message'][0] + ":</b></td><td id='chat2'>" + data['message'][1] + "</td></tr>");
+        });
+
+        //Receive information of system
+        socketio.on("system_info", function (data) {
+            $("#chatlog").prepend("<tr><td id='chat1'><b>System:</b></td><td id='chat2'>" + data["info"] + "</td></tr>");
+        });
+
+        var current_room_num;
+        socketio.on("the_room", function (data) {
+            //Enter a room
+            //If the boolean at the front is false, login fails
+            if (!data['the_room'][0]) {
+                $("#create_error").text(data['the_room'][1]);
+                return;
+            }
+            //Refresh the to_whom selection list
+            $("#to_whom").empty();
+            $("#to_whom").append("<option value='all'>To ALL</option><option value='anony'>Anonymous</option>");
+            for (var i = 0; i < data['the_room'][4].length; i++) {
+                $("#to_whom").append("<option value='" + i + "'>" + data['the_room'][4][i] + "</option>");
+            }
+            //This means the user has already in a room, so the call "the_room" is 
+            //just to refresh the page
+            if (current_room_num != null) {
+                $("#chat_info").text("#" + data['the_room'][1] + " (" + data['the_room'][2] + ") Admin: " + data['the_room'][5] + " Online: " + data['the_room'][4]);
+                return;
+            }
+            //Adjust the page
+            $("#send_message").css("display", "inline");
+            $("#create_error").empty();
+            $("#room_list").css("display", "none");
+            $("#create_room").css("display", "none");
+            $("#create_error").css("display", "none");
+            $("#message_input").css("display", "inline");
+            $("#message_input").focus();
+            $("#message_button").css("display", "inline");
+            $("#quit_button").css("display", "inline");
+            $("#to_whom").css("display", "inline");
+            $("#chat_info").css("display", "block");
+            $("#chatlog").empty();
+            $("#chatlog").css("display", "block");
+            $("#chatlog").prepend("<tr><td id='chat1'><b>System:</b></td><td id='chat2'>Welcome to Room#" + data['the_room'][1] + ".</td></tr>");
+            $("#chat_info").text("#" + data['the_room'][1] + " (" + data['the_room'][2] + ") Admin: " + data['the_room'][5] + " Online: " + data['the_room'][4]);
+            //Set current_room_num
+            current_room_num = parseInt(data['the_room'][1]);
+        });
+
+        //Display admin control panel, if the user is the admin
+        socketio.on("you_are_admin", function (data) {
+            if (data["admin"][0] && current_room_num != null) {
+                $("#admin_panel").css("display", "block");
+                $("#user_list").empty();
+                for (var i = 0; i < data["admin"][1].length; i++) {
+                    $("#user_list").append("<option value='" + i + "'>" + data["admin"][1][i] + "</option>");
+                }
+            } else {
+                $("#admin_panel").css("display", "none");
+            }
+        });
+        var loggedin = false;
+        //Display all the rooms when the user logged in and adjust the page
+        socketio.on("info_rooms", function (data) {
+            //If the user does not log in, do nothing
+            if (!loggedin)
+                return;
+            $("#room_list").empty();
+            if (data['info_rooms'].length == 0) {
+                $("#room_list_info").css("display", "block");
+                $("#room_list_info").text("No Room Available!");
+                return;
+            }
+            $("#room_list_info").css("display", "none");
+            $("#room_list").append("<tr><th>Room</th><th>Name</th><th>Type</th><th>Online</th><th>Admin</th></tr>");
+            for (var i = 0; i < data['info_rooms'].length; i++) {
+                $("#room_list").append("<tr>");
+                for (var j = 0; j < 5; j++) {
+                    $("#room_list").append("<td>" + data['info_rooms'][i][j] + "</td>");
+                }
+                if (data['info_rooms'][i][2] == "private") {
+                    $("#room_list").append("<td><input type='text' id='enter_pswd_" + i + "' class='enter_password_input' placeholder='password' /></td><td><button id='enter_button_" + i + "' class='enter_button'>Enter</button></td>");
+                    //When enter is pressed, send "attempt" information to server
+                    const room_num = data['info_rooms'][i][0];
+                    const indx = i;
+                    $("#enter_pswd_" + indx).keyup(function () {
+                        if (event.keyCode == 13)
+                            socketio.emit("enter_room", { enter_room: [room_num, $("#login_input").val(), $("#enter_pswd_" + indx).val()] });
+                    });
+                    $("#enter_button_" + i).click(function () {
+                        socketio.emit("enter_room", { enter_room: [room_num, $("#login_input").val(), $("#enter_pswd_" + indx).val()] });
+                    });
+                } else {
+                    $("#room_list").append("<td>No password</td><td><button id='enter_button_" + i + "' class='enter_button'>Enter</button></td>");
+                    //When enter is pressed, send "attempt" information to server
+                    const room_num = data['info_rooms'][i][0];
+                    const indx = i;
+                    $("#enter_button_" + i).click(function () {
+                        socketio.emit("enter_room", { enter_room: [room_num, $("#login_input").val()] });
+                    });
+                }
+                $("#room_list").append("</tr>");
+            }
+        });
+        //Send the message to the server
+        $("#message_button").click(sendMessage);
+        //When "enter" is pressed
+        $("#message_input").keyup(function () {
+            if (event.keyCode == 13) {
+                sendMessage();
+            }
+        });
+        function sendMessage() {
+            var inf = [];
+            var msg = $("#message_input").val();
+            inf.push(current_room_num);
+            inf.push(msg);
+            inf.push($("#login_input").val());
+            inf.push($("#to_whom").val());
+            $("#message_input").val("");
+            socketio.emit("message_to_server", { message: inf });
+        }
+        //Send the "quit" message to the server
+        $("#quit_button").click(sendQuit);
+        function sendQuit() {
+            var inf = [];
+            inf.push(current_room_num - 10000001);
+            socketio.emit("quit_room", { quit_room: inf });
+            current_room_num = null;
+            //Adjust page
+            $("#room_list_info").css("display", "none");
+            $("#room_list").css("display", "block");
+            $("#create_room").css("display", "inline");
+            $("#create_error").css("display", "block");
+            $("#send_message").css("display", "none");
+            $("#chat_info").css("display", "none");
+            $("#chatlog").css("display", "none");
+        }
+        //The user is kicked out
+        socketio.on("you_are_kicked", function (data) {
+            current_room_num = null;
+            $("#room_list_info").css("display", "none");
+            $("#room_list").css("display", "block");
+            $("#create_room").css("display", "inline");
+            $("#create_error").css("display", "block");
+            $("#send_message").css("display", "none");
+            $("#chat_info").css("display", "none");
+            $("#chatlog").css("display", "none");
+            $("#create_error").text("Sorry! You are kicked out from this chat room by Admin.");
+        });
+
+        //The user is banned
+        socketio.on("you_are_banned", function (data) {
+            current_room_num = null;
+            $("#room_list_info").css("display", "none");
+            $("#room_list").css("display", "block");
+            $("#create_room").css("display", "inline");
+            $("#create_error").css("display", "block");
+            $("#send_message").css("display", "none");
+            $("#chat_info").css("display", "none");
+            $("#chatlog").css("display", "none");
+            $("#create_error").text("Sorry! You are banned from this chat room by Admin.");
+        });
+
+        //The room is deleted
+        socketio.on("the_room_deleted", function (data) {
+            current_room_num = null;
+            $("#room_list_info").css("display", "none");
+            $("#room_list").css("display", "block");
+            $("#create_room").css("display", "inline");
+            $("#create_error").css("display", "block");
+            $("#send_message").css("display", "none");
+            $("#chat_info").css("display", "none");
+            $("#chatlog").css("display", "none");
+            $("#create_error").text("Sorry! The chat room has been deleted.");
+        });
+        //Press enter, adjust focus
+        $("#room_name_input").keyup(function () {
+            if (event.keyCode == 13) {
+                if($("#room_type").val()=="private")
+                    $("#room_password_input").focus();
+                else
+                    sendRoomInfo();
+            }
+        });
+        $("#room_password_input").keyup(function () {
+            if (event.keyCode == 13) {
+                sendRoomInfo();
+            }
+        });
+
+        $("#login_input").keyup(function () {
+            if (event.keyCode == 13) {
+                sendLogin();
+            }
+        });
+        //When a user logs in, send his nickname to the server
+        $("#login_button").click(sendLogin);
+        function sendLogin() {
+            //Do nothing if the username is empty
+            if ($("#login_input").val() == "") {
+                $("#login_error").text("Sorry! Nickname cannot be empty.");
+                return;
+            }
+            //Use JQuery to adjust the page
+            $("#introduction").text("Hello, " + $("#login_input").val() + "!");
+            $("#login_input").css("display", "none");
+            $("#login_button").css("display", "none");
+            $("#login_error").css("display", "none");
+            loggedin = true;
+            socketio.emit("user_login", { nickname: $("#login_input").val() });
+            $("#create_room").css("display", "inline");
+            $("#room_list").css("display", "block");
+            $("#room_name_input").focus();
+        }
+
+        //When a user changes the options of creating a char room
+        $("#room_type").change(function () {
+            if ($("#room_type").val() == "public") {
+                $("#room_password_input").css("display", "none");
+            } else {
+                $("#room_password_input").css("display", "inline");
+            }
+        });
+
+        //When a user creates a chat room, send information to the server
+        $("#create_room_button").click(sendRoomInfo);
+        function sendRoomInfo() {
+            if ($("#room_name_input").val() == "") {
+                $("#create_error").text("Sorry! The name of your chat room cannot be empty.");
+                return;
+            }
+            $("#create_error").empty();
+            const info = [$("#room_type").val(), $("#room_name_input").val(), $("#room_password_input").val(), $("#login_input").val()];
+            socketio.emit("room_created", { room_created: info });
+        }
+
+        //When an admin wants to kick out a user
+        $("#kick").click(kickUser);
+        function kickUser() {
+            socketio.emit("kick_user", { kick: [current_room_num - 10000001, parseInt($("#user_list").val())] });
+        }
+        //When an admin wants to ban a user
+        $("#ban").click(banUser);
+        function banUser() {
+            socketio.emit("ban_user", { ban: [current_room_num - 10000001, parseInt($("#user_list").val())] });
+        }
+        //When an admin wants to delete the room
+        $("#delete").click(deleteRoom);
+        function deleteRoom() {
+            socketio.emit("delete_room", { delete: [current_room_num - 10000001] });
+        }
+    </script>
+</body>
+
+</html>

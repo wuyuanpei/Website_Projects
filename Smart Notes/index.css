@@ -1,0 +1,138 @@
+body{
+    text-align: center;
+}
+table{
+    width:1500px;
+    height:25px;
+    margin:0 auto;
+}
+.folder{
+    font-size: 125%;
+    background-color:yellow;
+}
+
+.content{
+    height:25px;
+    text-align:center;
+    font-size: 110%;
+    border:0px solid black;
+    background-color: antiquewhite;
+}
+.head{
+    height:25px;
+    text-align:center;
+    font-size: 110%;
+    border:0px solid black;
+    background-color: antiquewhite;
+}
+.date{
+    width: 200px;
+}
+.tag{
+    width: 250px;
+}
+.course{
+    width: 450px;
+}
+.title{
+    width: 1050px;
+}
+.ops{
+    width: 90px;
+}
+#errorInfo{
+    color:red;
+}
+#titleInput{
+    font-size: 250%;
+    width: 500px;
+}
+#titleCaption{
+    font-size: 220%;
+}
+#courseInput{
+    width: 1300px;
+}
+#dateInput{
+    width: 1300px;
+}
+#tagInput{
+    width: 1300px;
+}
+
+.move{
+    position: absolute;
+    width: 450px;
+    height: 100px;
+    background-color: rgb(162, 235, 255);
+    color:black;
+    border: solid 4px #97bce9;
+    border-radius: 1em; 
+}
+.banner {
+    background-color: aliceblue;
+    font-size: 100%;
+    cursor: move;
+    border-radius: 1em;
+}
+.contentBox{
+    font-size: 150%;
+}
+#move1{
+    left:20px;
+    top:260px;
+}
+#move2{
+    left:20px;
+    top:385px;
+}
+#move3{
+    left:20px;
+    top:510px;
+}
+#move4{
+    left:20px;
+    top:635px;
+}
+#notePaper{
+    position: absolute;
+    width: 63%;
+    left:500px;
+    top:260px;
+    background-color: rgb(255, 255, 240);
+    border:5px dashed rgb(255, 255, 120);
+    border-radius: 2em;
+}
+#noteReminder{
+    font-size: 500%;
+    color:rgba(102, 100, 47, 0.741);
+}
+.moduleInput{
+    background-color: rgb(255, 255, 240);
+    border:0px;
+}
+#dialog{
+    display: none
+}
+#identity{
+    display:inline;
+    width:125px;
+}
+#username{
+    display:inline;
+    width:150px;
+}
+#password{
+    display:inline;
+    width:150px;
+}
+#file_name{
+    display:inline;
+    width:125px;
+}
+.rem{
+    color:red;
+}
+#materials{
+    font-size: 25px;
+}

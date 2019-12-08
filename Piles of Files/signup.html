@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang='en'>    
+    <head>
+        <title>
+            Sign up
+        </title>
+        <meta charset="utf-8">
+        <style>
+			body{font-size:200%;background-color:#000000;color:#FFFFFF;text-align: center;}
+            .title {font-size: 250%;color:red}
+        </style>
+    </head>
+    <body>
+        <p>
+            <b class='title'>Welcome to PoF News</b><br/>
+            Please enter your username and password. Thank you!<br/>
+            Username/Password: can only contain A-Za-z0-9_-.<br/>
+            Your username cannot be more than 20 characters.<br/>
+            If your username is occupied by others, please give yourself another unique name!<br/>
+            Although there is no restriction for password, we recommend you using at least 6 characters!<br/>
+            <form action="signup.php" method="POST">
+			<label>
+				username:
+				<input type="text" name="username" style="width:150px; height:25px; font-size:20px"/>
+			</label><br/>
+            <label>
+				password:
+				<input type="text" name="password" style="width:150px; height:25px; font-size:20px"/>
+			</label><br/>
+			<input type="submit" value="sign up"/>
+		</form>
+        <p>
+    </body>
+</html>

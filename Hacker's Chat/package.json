@@ -1,0 +1,19 @@
+{
+  "name": "fall2018-module6-group-464493-450896",
+  "version": "1.0.0",
+  "description": "A Chat Server",
+  "main": "chat-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://richardwu0219@bitbucket.org/cse330/fall2018-module6-group-464493-450896.git"
+  },
+  "author": "Richard Wu",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/cse330/fall2018-module6-group-464493-450896#readme",
+  "dependencies": {
+    "socket.io": "^2.1.1"
+  }
+}

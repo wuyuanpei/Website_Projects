@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang='zh'>
+<!--the portal of this site-->
+    <head>
+		<meta charset='utf-8'/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+        <title>
+            File Sharing Site Portal
+        </title>
+        <style>
+			body{font-size:200%;background-color:#c0c0c0}
+			h6{color:black;text-align: center}
+			p{
+				font-size:50%;
+				color:blue;
+			}
+			#t{
+				color:red
+			}
+			@keyframes blink{
+  				0%{opacity: 1;}
+  				100%{opacity: 0;} 
+			}
+			.blink{
+    		color:red;
+    		animation: blink 1s linear infinite;
+			}
+        </style>
+    </head>
+	<body>
+		<h6>
+			Welcome to Richard's File Sharing Site<br/>
+			<label id="t">--本站只提供小型文件的中转--</label><br/>
+			直接输入用户名点击login/signup即可
+		</h6>
+		<form action="login.php" method="GET">
+			<label>
+				username:
+				<input type="text" name="username" style="width:200px; height:30px; font-size:25px"/>
+			</label><br/>
+			<input type="submit" value="log in"/>
+		</form>
+		<form action="signup.html" method="GET">
+			<input type="submit" value="sign up"/>
+		</form>
+		<p>全世界最轻量级的跨平台文件中转站 <a href="http://54.242.152.54" class="blink">主页</a></p>
+    </body>
+</html>
