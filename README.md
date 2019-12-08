@@ -3,7 +3,7 @@ Website projects developed, including File sharing site, News site, Chat site, C
 ## Author
 Richard Wu
 ## Notes
-This repo contains multiple websites developed. Details can be found in the READMEs in the specific folder of each website.
+This repo contains multiple websites developed. Details and links can be found in the READMEs in the specific folder of each website.
 - File Sharing Site: a file sharing site developed by HTML/CSS/JS
 - Hacker's Chat: a chat site developed by Node.js/Socket.io
 - Perfect Calendar: a Calendar site developed by HTML/CSS/JQuery/mySQL/PHP
