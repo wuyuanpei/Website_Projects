@@ -14,6 +14,6 @@
   "license": "ISC",
   "homepage": "https://bitbucket.org/cse330/fall2018-module6-group-464493-450896#readme",
   "dependencies": {
-    "socket.io": "^2.1.1"
+    "socket.io": "^2.5.0"
   }
 }
